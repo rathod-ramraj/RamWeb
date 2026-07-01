@@ -67,7 +67,7 @@ const JOURNEY: JourneyEntry[] = [
     title: "Frontend Developer Intern",
     org: "BlogstormAI",
     url: "https://github.com/BlogstormAI",
-    period: "2025",
+    period: "2026",
     status: "completed",
     detail: "Developed responsive frontend components using React and Next.js, contributed to WPrise AI platform, collaborated with backend and design teams, improved accessibility and optimized UI performance.",
     tags: ["React", "Next.js", "Tailwind", "TypeScript", "Frontend"],
@@ -1090,7 +1090,6 @@ export function Portfolio() {
           <div className="pf-hero-kicker" data-reveal="true">
             <span>Rathod Ramraj</span>
             <span>Hyderabad, India</span>
-            <span>rathod-ramraj</span>
           </div>
           <div className="pf-hero-layout">
             <div className="pf-hero-copy">
@@ -1110,21 +1109,9 @@ export function Portfolio() {
               </p>
             </div>
             <div className="pf-hero-visual" data-reveal="true">
-              <div className="pf-portrait-frame" aria-label="Abstract cyber visual">
-                <div className="pf-portrait-bg" />
-                <div className="pf-portrait-figure">
-                  <div className="pf-helmet">
-                    <span className="pf-visor" />
-                    <span className="pf-crest" />
-                  </div>
-                  <div className="pf-torso" />
-                </div>
-                <div className="pf-portrait-orbit pf-orbit-one" />
-                <div className="pf-portrait-orbit pf-orbit-two" />
-                <div className="pf-portrait-readout">
-                  <span>CORE ONLINE</span>
-                  <span>NIT JALANDHAR</span>
-                </div>
+              <div className="pf-portrait-readout" style={{ position: "static", textAlign: "right" }}>
+                <span>CORE ONLINE</span>
+                <span>NIT JALANDHAR</span>
               </div>
             </div>
           </div>
