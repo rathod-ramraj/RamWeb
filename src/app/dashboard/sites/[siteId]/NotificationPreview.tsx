@@ -1,0 +1,387 @@
+"use client";
+import { useState } from "react";
+import Image from "next/image";
+import { AnimatePresence, motion, LayoutGroup } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+type OS = "macos" | "windows" | "android" | "chrome" | "brave";
+
+const OS_META: { id: OS; label: string; sub: string }[] = [
+  { id: "macos", label: "macOS", sub: "Notification Center" },
+  { id: "windows", label: "Windows", sub: "Action Center" },
+  { id: "android", label: "Android", sub: "Chrome" },
+  { id: "chrome", label: "Chrome", sub: "Desktop" },
+  { id: "brave", label: "Brave", sub: "Desktop" },
+];
+
+export default function NotificationPreview({
+  title,
+  body,
+  iconUrl,
+  imageUrl,
+  actions,
+  originHost,
+}: {
+  title: string;
+  body: string;
+  iconUrl?: string;
+  imageUrl?: string;
+  actions?: string[];
+  originHost: string;
+}) {
+  const [os, setOs] = useState<OS>("macos");
+
+  return (
+    <div className="flex flex-col rounded-xl border border-border bg-panel">
+      <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.18em] text-accent">Preview</div>
+          <h3 className="mt-0.5 text-sm font-semibold text-white">How it&apos;ll look</h3>
+        </div>
+        <span className="hidden text-[11px] text-muted sm:inline">
+          {OS_META.find((o) => o.id === os)?.sub}
+        </span>
+      </div>
+
+      <LayoutGroup id="os-preview-tabs">
+        <div className="flex flex-wrap gap-1 border-b border-border/60 px-3 py-2">
+          {OS_META.map((o) => {
+            const active = os === o.id;
+            return (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => setOs(o.id)}
+                className={cn(
+                  "relative rounded-md px-2.5 py-1 text-[11px] font-medium transition",
+                  active ? "text-white" : "text-muted hover:text-white"
+                )}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="os-preview-pill"
+                    className="absolute inset-0 rounded-md bg-accent shadow-[0_0_20px_-6px_rgba(93,10,209,0.8)]"
+                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                  />
+                )}
+                <span className="relative z-10">{o.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </LayoutGroup>
+
+      <div
+        className={cn(
+          "relative flex flex-1 items-center justify-center overflow-hidden p-6 transition-colors duration-300",
+          bgFor(os)
+        )}
+      >
+        <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.06),transparent_50%),radial-gradient(circle_at_80%_90%,rgba(93,10,209,0.15),transparent_50%)]" />
+        <div className="relative w-full max-w-sm">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={os}
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.98 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
+              {os === "macos" && <MacToast title={title} body={body} iconUrl={iconUrl} imageUrl={imageUrl} actions={actions} originHost={originHost} />}
+              {os === "windows" && <WinToast title={title} body={body} iconUrl={iconUrl} imageUrl={imageUrl} actions={actions} originHost={originHost} />}
+              {os === "android" && <AndroidToast title={title} body={body} iconUrl={iconUrl} imageUrl={imageUrl} actions={actions} originHost={originHost} />}
+              {os === "chrome" && <ChromeToast title={title} body={body} iconUrl={iconUrl} imageUrl={imageUrl} actions={actions} originHost={originHost} />}
+              {os === "brave" && <BraveToast title={title} body={body} iconUrl={iconUrl} imageUrl={imageUrl} actions={actions} originHost={originHost} />}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function bgFor(os: OS) {
+  switch (os) {
+    case "macos":
+      return "bg-gradient-to-br from-[#2b1a5c] via-[#1a1240] to-[#0b0620]";
+    case "windows":
+      return "bg-gradient-to-br from-[#0a2540] via-[#071a2d] to-[#040d17]";
+    case "android":
+      return "bg-gradient-to-br from-[#0d1a12] via-[#0a1310] to-[#050b08]";
+    case "chrome":
+      return "bg-gradient-to-br from-[#1a1a1a] via-[#0f0f0f] to-black";
+    case "brave":
+      return "bg-gradient-to-br from-[#2a1408] via-[#180b04] to-[#0a0402]";
+  }
+}
+
+function Icon({ src }: { src?: string }) {
+  if (src) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt="" className="h-full w-full object-cover" />;
+  }
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-accent/30">
+      <Image src="/logo.png" alt="" width={22} height={22} />
+    </div>
+  );
+}
+
+function Poster({ src, rounded = "rounded" }: { src?: string; rounded?: string }) {
+  if (!src) return null;
+  return (
+    <div className={cn("mt-2 overflow-hidden", rounded)}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="" className="aspect-[2/1] w-full object-cover" />
+    </div>
+  );
+}
+
+function Actions({ items }: { items?: string[] }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <div className="mt-2 flex gap-1.5 border-t border-white/5 pt-2">
+      {items.map((label, i) => (
+        <div
+          key={i}
+          className="flex-1 truncate rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 text-center text-[11px] font-medium text-white/85"
+        >
+          {label}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- macOS toast ---------- */
+function MacToast({
+  title,
+  body,
+  iconUrl,
+  imageUrl,
+  actions,
+  originHost,
+}: {
+  title: string;
+  body: string;
+  iconUrl?: string;
+  imageUrl?: string;
+  actions?: string[];
+  originHost: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-[rgba(40,40,45,0.72)] p-3 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.7)] backdrop-blur-xl">
+      <div className="flex gap-3">
+        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg">
+          <Icon src={iconUrl} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-white/60">
+              {originHost}
+            </span>
+            <span className="text-[10px] text-white/40">now</span>
+          </div>
+          <div className="mt-0.5 truncate text-[13px] font-semibold text-white">{title || " "}</div>
+          <div className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-white/80">
+            {body || " "}
+          </div>
+        </div>
+      </div>
+      {imageUrl && (
+        <div className="mt-2 text-[9px] italic text-white/30">
+          Poster shown on Chrome/Android — Safari/macOS ignores it.
+        </div>
+      )}
+      {actions && actions.length > 0 && (
+        <div className="mt-1 text-[9px] italic text-white/30">
+          Buttons don&apos;t show on macOS/Safari — Chrome/Edge/Android only.
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Windows 11 toast ---------- */
+function WinToast({
+  title,
+  body,
+  iconUrl,
+  imageUrl,
+  actions,
+  originHost,
+}: {
+  title: string;
+  body: string;
+  iconUrl?: string;
+  imageUrl?: string;
+  actions?: string[];
+  originHost: string;
+}) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-white/10 bg-[rgba(30,30,30,0.9)] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.7)] backdrop-blur">
+      <div className="p-3">
+        <div className="mb-2 flex items-center justify-between text-[10px] text-white/50">
+          <span>Google Chrome</span>
+          <div className="flex items-center gap-2">
+            <span>now</span>
+            <span className="rounded p-0.5 hover:bg-white/10">×</span>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <div className="h-12 w-12 shrink-0 overflow-hidden rounded">
+            <Icon src={iconUrl} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[13px] font-semibold text-white">{title || " "}</div>
+            <div className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-white/80">
+              {body || " "}
+            </div>
+            <div className="mt-1 text-[10px] text-white/40">via {originHost}</div>
+          </div>
+        </div>
+        <Poster src={imageUrl} rounded="rounded-md" />
+        <Actions items={actions} />
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Android (heads-up) ---------- */
+function AndroidToast({
+  title,
+  body,
+  iconUrl,
+  imageUrl,
+  actions,
+  originHost,
+}: {
+  title: string;
+  body: string;
+  iconUrl?: string;
+  imageUrl?: string;
+  actions?: string[];
+  originHost: string;
+}) {
+  return (
+    <div className="rounded-3xl bg-[rgba(28,32,30,0.95)] p-3 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.7)]">
+      <div className="mb-2 flex items-center gap-2 text-[10px] text-white/60">
+        <div className="flex h-4 w-4 items-center justify-center rounded-full bg-accent/60 text-[9px] text-white">
+          L
+        </div>
+        <span>Chrome</span>
+        <span className="text-white/30">•</span>
+        <span>{originHost}</span>
+        <span className="text-white/30">•</span>
+        <span>now</span>
+      </div>
+      <div className="flex gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[13px] font-semibold text-white">{title || " "}</div>
+          <div className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-white/80">
+            {body || " "}
+          </div>
+        </div>
+        <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg">
+          <Icon src={iconUrl} />
+        </div>
+      </div>
+      <Poster src={imageUrl} rounded="rounded-xl" />
+      <Actions items={actions} />
+    </div>
+  );
+}
+
+/* ---------- Chrome desktop popup ---------- */
+function ChromeToast({
+  title,
+  body,
+  iconUrl,
+  imageUrl,
+  actions,
+  originHost,
+}: {
+  title: string;
+  body: string;
+  iconUrl?: string;
+  imageUrl?: string;
+  actions?: string[];
+  originHost: string;
+}) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-white/10 bg-[#202124] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.8)]">
+      <div className="flex items-center justify-between border-b border-white/5 px-3 py-1.5 text-[10px] text-white/50">
+        <div className="flex items-center gap-1.5">
+          <svg viewBox="0 0 20 20" className="h-3 w-3 text-white/60">
+            <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="1.4" />
+            <circle cx="10" cy="10" r="3" fill="currentColor" />
+          </svg>
+          <span>Google Chrome · {originHost}</span>
+        </div>
+        <span>×</span>
+      </div>
+      <div className="p-3">
+        <div className="flex gap-3">
+          <div className="h-12 w-12 shrink-0 overflow-hidden rounded">
+            <Icon src={iconUrl} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[13px] font-semibold text-white">{title || " "}</div>
+            <div className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-white/75">
+              {body || " "}
+            </div>
+          </div>
+        </div>
+        <Poster src={imageUrl} rounded="rounded-md" />
+        <Actions items={actions} />
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Brave desktop popup ---------- */
+function BraveToast({
+  title,
+  body,
+  iconUrl,
+  imageUrl,
+  actions,
+  originHost,
+}: {
+  title: string;
+  body: string;
+  iconUrl?: string;
+  imageUrl?: string;
+  actions?: string[];
+  originHost: string;
+}) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-[#fb542b]/40 bg-[#1a1613] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.8)]">
+      <div className="flex items-center justify-between border-b border-white/5 bg-[#241a15] px-3 py-1.5 text-[10px] text-white/60">
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block h-2 w-2 rounded-sm bg-[#fb542b]" />
+          <span>Brave · {originHost}</span>
+        </div>
+        <span>×</span>
+      </div>
+      <div className="p-3">
+        <div className="flex gap-3">
+          <div className="h-12 w-12 shrink-0 overflow-hidden rounded">
+            <Icon src={iconUrl} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[13px] font-semibold text-white">{title || " "}</div>
+            <div className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-white/75">
+              {body || " "}
+            </div>
+            <div className="mt-1 text-[10px] text-[#fb542b]/70">
+              Some Brave configs block push — heads up.
+            </div>
+          </div>
+        </div>
+        <Poster src={imageUrl} rounded="rounded-md" />
+        <Actions items={actions} />
+      </div>
+    </div>
+  );
+}
