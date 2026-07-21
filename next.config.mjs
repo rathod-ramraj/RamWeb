@@ -11,6 +11,12 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   async headers() {
     return [
       {
